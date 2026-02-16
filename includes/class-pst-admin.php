@@ -75,8 +75,8 @@ class PST_Admin {
 	 */
 	public function register_admin_menu() {
 		add_management_page(
-			__( 'Persian Slug Transliterator', 'Persian-Slug-Transliterator-main' ),
-			__( 'Persian Slugs', 'Persian-Slug-Transliterator-main' ),
+			__( 'Persian Slug Transliterator', 'persian-slug-transliterator' ),
+			__( 'Persian Slugs', 'persian-slug-transliterator' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render_admin_page' )
@@ -101,7 +101,7 @@ class PST_Admin {
 
 		?>
 		<div class="wrap">
-			<h1><?php echo esc_html__( 'Persian Slug Transliterator', 'Persian-Slug-Transliterator-main' ); ?></h1>
+			<h1><?php echo esc_html__( 'Persian Slug Transliterator', 'persian-slug-transliterator' ); ?></h1>
 
 			<?php if ( $done || $skipped ) : ?>
 				<div class="notice notice-success is-dismissible">
@@ -109,7 +109,7 @@ class PST_Admin {
 						<?php
 						printf(
 							/* translators: 1: Number of updated slugs. 2: Number of skipped slugs. */
-							esc_html__( 'Bulk update completed. Updated: %1$s — Skipped: %2$s', 'Persian-Slug-Transliterator-main' ),
+							esc_html__( 'Bulk update completed. Updated: %1$s — Skipped: %2$s', 'persian-slug-transliterator' ),
 							'<strong>' . esc_html( number_format_i18n( $done ) ) . '</strong>',
 							'<strong>' . esc_html( number_format_i18n( $skipped ) ) . '</strong>'
 						);
@@ -119,7 +119,7 @@ class PST_Admin {
 			<?php endif; ?>
 
 			<p>
-				<?php esc_html_e( 'This tool converts existing Persian/Arabic slugs for posts, pages, categories, and tags to clean Latin characters based on their names.', 'Persian-Slug-Transliterator-main' ); ?>
+				<?php esc_html_e( 'This tool converts existing Persian/Arabic slugs for posts, pages, categories, and tags to clean Latin characters based on their names.', 'persian-slug-transliterator' ); ?>
 			</p>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -129,62 +129,62 @@ class PST_Admin {
 				<table class="form-table" role="presentation">
 					<tr>
 						<th scope="row">
-							<?php esc_html_e( 'Items to translate', 'Persian-Slug-Transliterator-main' ); ?>
+							<?php esc_html_e( 'Items to translate', 'persian-slug-transliterator' ); ?>
 						</th>
 						<td>
-							<label><input type="checkbox" name="targets[]" value="post" checked="checked" /> <?php esc_html_e( 'Posts', 'Persian-Slug-Transliterator-main' ); ?></label><br />
-							<label><input type="checkbox" name="targets[]" value="page" checked="checked" /> <?php esc_html_e( 'Pages', 'Persian-Slug-Transliterator-main' ); ?></label><br />
-							<label><input type="checkbox" name="targets[]" value="category" checked="checked" /> <?php esc_html_e( 'Categories', 'Persian-Slug-Transliterator-main' ); ?></label><br />
-							<label><input type="checkbox" name="targets[]" value="post_tag" checked="checked" /> <?php esc_html_e( 'Tags', 'Persian-Slug-Transliterator-main' ); ?></label>
+							<label><input type="checkbox" name="targets[]" value="post" checked="checked" /> <?php esc_html_e( 'Posts', 'persian-slug-transliterator' ); ?></label><br />
+							<label><input type="checkbox" name="targets[]" value="page" checked="checked" /> <?php esc_html_e( 'Pages', 'persian-slug-transliterator' ); ?></label><br />
+							<label><input type="checkbox" name="targets[]" value="category" checked="checked" /> <?php esc_html_e( 'Categories', 'persian-slug-transliterator' ); ?></label><br />
+							<label><input type="checkbox" name="targets[]" value="post_tag" checked="checked" /> <?php esc_html_e( 'Tags', 'persian-slug-transliterator' ); ?></label>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="pst_limit"><?php esc_html_e( 'Batch Size', 'Persian-Slug-Transliterator-main' ); ?></label>
+							<label for="pst_limit"><?php esc_html_e( 'Batch Size', 'persian-slug-transliterator' ); ?></label>
 						</th>
 						<td>
 							<input type="number" name="limit" id="pst_limit" value="200" min="1" max="2000" class="small-text" />
 							<p class="description">
-								<?php esc_html_e( 'Number of items to process per selected type/taxonomy.', 'Persian-Slug-Transliterator-main' ); ?>
+								<?php esc_html_e( 'Number of items to process per selected type/taxonomy.', 'persian-slug-transliterator' ); ?>
 							</p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="pst_offset"><?php esc_html_e( 'Offset', 'Persian-Slug-Transliterator-main' ); ?></label>
+							<label for="pst_offset"><?php esc_html_e( 'Offset', 'persian-slug-transliterator' ); ?></label>
 						</th>
 						<td>
 							<input type="number" name="offset" id="pst_offset" value="0" min="0" class="small-text" />
 							<p class="description">
-								<?php esc_html_e( 'Skip this many items from each selected type/taxonomy.', 'Persian-Slug-Transliterator-main' ); ?>
+								<?php esc_html_e( 'Skip this many items from each selected type/taxonomy.', 'persian-slug-transliterator' ); ?>
 							</p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">
-							<?php esc_html_e( 'Force Overwrite', 'Persian-Slug-Transliterator-main' ); ?>
+							<?php esc_html_e( 'Force Overwrite', 'persian-slug-transliterator' ); ?>
 						</th>
 						<td>
 							<label for="pst_force">
 								<input type="checkbox" name="force" id="pst_force" value="1" />
-								<?php esc_html_e( 'Overwrite slugs that are already in Latin characters.', 'Persian-Slug-Transliterator-main' ); ?>
+								<?php esc_html_e( 'Overwrite slugs that are already in Latin characters.', 'persian-slug-transliterator' ); ?>
 							</label>
 							<p class="description">
-								<?php esc_html_e( 'If a tag/category slug is already Persian, its own Persian slug will be kept unless force is enabled.', 'Persian-Slug-Transliterator-main' ); ?>
+								<?php esc_html_e( 'If a tag/category slug is already Persian, its own Persian slug will be kept unless force is enabled.', 'persian-slug-transliterator' ); ?>
 							</p>
 						</td>
 					</tr>
 				</table>
 
-				<?php submit_button( esc_html__( 'Start Bulk Update', 'Persian-Slug-Transliterator-main' ) ); ?>
+				<?php submit_button( esc_html__( 'Start Bulk Update', 'persian-slug-transliterator' ) ); ?>
 			</form>
 
 			<hr />
 
 			<div class="notice notice-warning inline">
 				<p>
-					<strong><?php esc_html_e( 'Important:', 'Persian-Slug-Transliterator-main' ); ?></strong>
-					<?php esc_html_e( 'After updating slugs, consider setting up 301 redirects from old URLs to new ones to preserve SEO and avoid broken links.', 'Persian-Slug-Transliterator-main' ); ?>
+					<strong><?php esc_html_e( 'Important:', 'persian-slug-transliterator' ); ?></strong>
+					<?php esc_html_e( 'After updating slugs, consider setting up 301 redirects from old URLs to new ones to preserve SEO and avoid broken links.', 'persian-slug-transliterator' ); ?>
 				</p>
 			</div>
 		</div>
@@ -244,21 +244,21 @@ class PST_Admin {
 		?>
 		<div id="pst-activation-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;">
 			<div style="background:#fff;max-width:560px;width:92%;padding:24px;border-radius:6px;box-shadow:0 15px 35px rgba(0,0,0,.2);">
-				<h2 style="margin-top:0;"><?php esc_html_e( 'Translate existing slugs now?', 'Persian-Slug-Transliterator-main' ); ?></h2>
-				<p><?php esc_html_e( 'Select which content you want to transliterate. Persian tags/categories are detected from their names and updated to clean slugs.', 'Persian-Slug-Transliterator-main' ); ?></p>
+				<h2 style="margin-top:0;"><?php esc_html_e( 'Translate existing slugs now?', 'persian-slug-transliterator' ); ?></h2>
+				<p><?php esc_html_e( 'Select which content you want to transliterate. Persian tags/categories are detected from their names and updated to clean slugs.', 'persian-slug-transliterator' ); ?></p>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="pst_bulk_update" />
 					<input type="hidden" name="limit" value="2000" />
 					<input type="hidden" name="offset" value="0" />
 					<?php wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD ); ?>
 					<p>
-						<label><input type="checkbox" name="targets[]" value="post" checked="checked" /> <?php esc_html_e( 'Posts', 'Persian-Slug-Transliterator-main' ); ?></label><br />
-						<label><input type="checkbox" name="targets[]" value="page" checked="checked" /> <?php esc_html_e( 'Pages', 'Persian-Slug-Transliterator-main' ); ?></label><br />
-						<label><input type="checkbox" name="targets[]" value="category" checked="checked" /> <?php esc_html_e( 'Categories', 'Persian-Slug-Transliterator-main' ); ?></label><br />
-						<label><input type="checkbox" name="targets[]" value="post_tag" checked="checked" /> <?php esc_html_e( 'Tags', 'Persian-Slug-Transliterator-main' ); ?></label>
+						<label><input type="checkbox" name="targets[]" value="post" checked="checked" /> <?php esc_html_e( 'Posts', 'persian-slug-transliterator' ); ?></label><br />
+						<label><input type="checkbox" name="targets[]" value="page" checked="checked" /> <?php esc_html_e( 'Pages', 'persian-slug-transliterator' ); ?></label><br />
+						<label><input type="checkbox" name="targets[]" value="category" checked="checked" /> <?php esc_html_e( 'Categories', 'persian-slug-transliterator' ); ?></label><br />
+						<label><input type="checkbox" name="targets[]" value="post_tag" checked="checked" /> <?php esc_html_e( 'Tags', 'persian-slug-transliterator' ); ?></label>
 					</p>
-					<?php submit_button( esc_html__( 'Start Translation', 'Persian-Slug-Transliterator-main' ), 'primary', 'submit', false ); ?>
-					<a href="<?php echo esc_url( $dismiss_url ); ?>" class="button" style="margin-left:8px;"><?php esc_html_e( 'Not now', 'Persian-Slug-Transliterator-main' ); ?></a>
+					<?php submit_button( esc_html__( 'Start Translation', 'persian-slug-transliterator' ), 'primary', 'submit', false ); ?>
+					<a href="<?php echo esc_url( $dismiss_url ); ?>" class="button" style="margin-left:8px;"><?php esc_html_e( 'Not now', 'persian-slug-transliterator' ); ?></a>
 				</form>
 			</div>
 		</div>
@@ -274,7 +274,7 @@ class PST_Admin {
 	public function handle_bulk_update() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die(
-				esc_html__( 'You do not have sufficient permissions to access this page.', 'Persian-Slug-Transliterator-main' ),
+				esc_html__( 'You do not have sufficient permissions to access this page.', 'persian-slug-transliterator' ),
 				403
 			);
 		}
@@ -284,7 +284,7 @@ class PST_Admin {
 			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE_FIELD ] ) ), self::NONCE_ACTION )
 		) {
 			wp_die(
-				esc_html__( 'Security check failed. Please try again.', 'Persian-Slug-Transliterator-main' ),
+				esc_html__( 'Security check failed. Please try again.', 'persian-slug-transliterator' ),
 				403
 			);
 		}
