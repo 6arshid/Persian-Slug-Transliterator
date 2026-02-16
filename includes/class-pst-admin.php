@@ -47,6 +47,14 @@ class PST_Admin {
 	const PAGE_SLUG = 'persian-slug-transliterator';
 
 	/**
+	 * Option key for showing the first-install popup.
+	 *
+	 * @since 1.0.0
+	 * @var string
+	 */
+	const ACTIVATION_POPUP_OPTION = 'pst_show_activation_popup';
+
+	/**
 	 * Initialize admin hooks.
 	 *
 	 * @since 1.0.0
@@ -55,6 +63,8 @@ class PST_Admin {
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_action( 'admin_post_pst_bulk_update', array( $this, 'handle_bulk_update' ) );
+		add_action( 'admin_init', array( $this, 'handle_popup_dismissal' ) );
+		add_action( 'admin_footer', array( $this, 'render_activation_popup' ) );
 	}
 
 	/**
@@ -109,7 +119,7 @@ class PST_Admin {
 			<?php endif; ?>
 
 			<p>
-				<?php esc_html_e( 'This tool converts existing Persian/Arabic slugs of posts and pages to clean Latin characters based on the post title.', 'persian-slug-transliterator' ); ?>
+				<?php esc_html_e( 'This tool converts existing Persian/Arabic slugs for posts, pages, categories, and tags to clean Latin characters based on their names.', 'persian-slug-transliterator' ); ?>
 			</p>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -119,30 +129,13 @@ class PST_Admin {
 				<table class="form-table" role="presentation">
 					<tr>
 						<th scope="row">
-							<label for="pst_post_type"><?php esc_html_e( 'Content Type', 'persian-slug-transliterator' ); ?></label>
+							<?php esc_html_e( 'Items to translate', 'persian-slug-transliterator' ); ?>
 						</th>
 						<td>
-							<select name="post_type" id="pst_post_type">
-								<option value="post"><?php esc_html_e( 'Posts', 'persian-slug-transliterator' ); ?></option>
-								<option value="page"><?php esc_html_e( 'Pages', 'persian-slug-transliterator' ); ?></option>
-								<?php
-								// Allow custom post types.
-								$custom_post_types = get_post_types(
-									array(
-										'public'   => true,
-										'_builtin' => false,
-									),
-									'objects'
-								);
-								foreach ( $custom_post_types as $cpt ) {
-									printf(
-										'<option value="%s">%s</option>',
-										esc_attr( $cpt->name ),
-										esc_html( $cpt->labels->name )
-									);
-								}
-								?>
-							</select>
+							<label><input type="checkbox" name="targets[]" value="post" checked="checked" /> <?php esc_html_e( 'Posts', 'persian-slug-transliterator' ); ?></label><br />
+							<label><input type="checkbox" name="targets[]" value="page" checked="checked" /> <?php esc_html_e( 'Pages', 'persian-slug-transliterator' ); ?></label><br />
+							<label><input type="checkbox" name="targets[]" value="category" checked="checked" /> <?php esc_html_e( 'Categories', 'persian-slug-transliterator' ); ?></label><br />
+							<label><input type="checkbox" name="targets[]" value="post_tag" checked="checked" /> <?php esc_html_e( 'Tags', 'persian-slug-transliterator' ); ?></label>
 						</td>
 					</tr>
 					<tr>
@@ -152,7 +145,7 @@ class PST_Admin {
 						<td>
 							<input type="number" name="limit" id="pst_limit" value="200" min="1" max="2000" class="small-text" />
 							<p class="description">
-								<?php esc_html_e( 'Number of posts to process per batch. Use a smaller number for large sites to avoid timeouts.', 'persian-slug-transliterator' ); ?>
+								<?php esc_html_e( 'Number of items to process per selected type/taxonomy.', 'persian-slug-transliterator' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -163,7 +156,7 @@ class PST_Admin {
 						<td>
 							<input type="number" name="offset" id="pst_offset" value="0" min="0" class="small-text" />
 							<p class="description">
-								<?php esc_html_e( 'Skip this many posts from the beginning. Use for batch processing (e.g., 0, 200, 400, ...).', 'persian-slug-transliterator' ); ?>
+								<?php esc_html_e( 'Skip this many items from each selected type/taxonomy.', 'persian-slug-transliterator' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -177,7 +170,7 @@ class PST_Admin {
 								<?php esc_html_e( 'Overwrite slugs that are already in Latin characters.', 'persian-slug-transliterator' ); ?>
 							</label>
 							<p class="description">
-								<?php esc_html_e( 'Not recommended unless you want all slugs regenerated uniformly.', 'persian-slug-transliterator' ); ?>
+								<?php esc_html_e( 'If a tag/category slug is already Persian, its own Persian slug will be kept unless force is enabled.', 'persian-slug-transliterator' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -199,13 +192,86 @@ class PST_Admin {
 	}
 
 	/**
+	 * Handle popup dismissal action.
+	 *
+	 * @since 1.0.0
+	 * @return void
+	 */
+	public function handle_popup_dismissal() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce checked below if action exists.
+		if ( empty( $_GET['pst_popup_action'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$action = sanitize_key( wp_unslash( $_GET['pst_popup_action'] ) );
+
+		if ( 'dismiss' !== $action ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+
+		if ( ! wp_verify_nonce( $nonce, 'pst_popup_dismiss' ) ) {
+			return;
+		}
+
+		delete_option( self::ACTIVATION_POPUP_OPTION );
+		wp_safe_redirect( remove_query_arg( array( 'pst_popup_action', '_wpnonce' ) ) );
+		exit;
+	}
+
+	/**
+	 * Render first-install popup to run translation quickly.
+	 *
+	 * @since 1.0.0
+	 * @return void
+	 */
+	public function render_activation_popup() {
+		if ( ! current_user_can( 'manage_options' ) || ! get_option( self::ACTIVATION_POPUP_OPTION ) ) {
+			return;
+		}
+
+		$dismiss_url = wp_nonce_url(
+			add_query_arg( 'pst_popup_action', 'dismiss', admin_url() ),
+			'pst_popup_dismiss'
+		);
+		?>
+		<div id="pst-activation-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;">
+			<div style="background:#fff;max-width:560px;width:92%;padding:24px;border-radius:6px;box-shadow:0 15px 35px rgba(0,0,0,.2);">
+				<h2 style="margin-top:0;"><?php esc_html_e( 'Translate existing slugs now?', 'persian-slug-transliterator' ); ?></h2>
+				<p><?php esc_html_e( 'Select which content you want to transliterate. Persian tags/categories are detected from their names and updated to clean slugs.', 'persian-slug-transliterator' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="pst_bulk_update" />
+					<input type="hidden" name="limit" value="2000" />
+					<input type="hidden" name="offset" value="0" />
+					<?php wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD ); ?>
+					<p>
+						<label><input type="checkbox" name="targets[]" value="post" checked="checked" /> <?php esc_html_e( 'Posts', 'persian-slug-transliterator' ); ?></label><br />
+						<label><input type="checkbox" name="targets[]" value="page" checked="checked" /> <?php esc_html_e( 'Pages', 'persian-slug-transliterator' ); ?></label><br />
+						<label><input type="checkbox" name="targets[]" value="category" checked="checked" /> <?php esc_html_e( 'Categories', 'persian-slug-transliterator' ); ?></label><br />
+						<label><input type="checkbox" name="targets[]" value="post_tag" checked="checked" /> <?php esc_html_e( 'Tags', 'persian-slug-transliterator' ); ?></label>
+					</p>
+					<?php submit_button( esc_html__( 'Start Translation', 'persian-slug-transliterator' ), 'primary', 'submit', false ); ?>
+					<a href="<?php echo esc_url( $dismiss_url ); ?>" class="button" style="margin-left:8px;"><?php esc_html_e( 'Not now', 'persian-slug-transliterator' ); ?></a>
+				</form>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Handle the bulk update form submission.
 	 *
 	 * @since 1.0.0
 	 * @return void
 	 */
 	public function handle_bulk_update() {
-		// Verify user capability.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die(
 				esc_html__( 'You do not have sufficient permissions to access this page.', 'persian-slug-transliterator' ),
@@ -213,7 +279,6 @@ class PST_Admin {
 			);
 		}
 
-		// Verify nonce.
 		if (
 			! isset( $_POST[ self::NONCE_FIELD ] ) ||
 			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE_FIELD ] ) ), self::NONCE_ACTION )
@@ -224,21 +289,70 @@ class PST_Admin {
 			);
 		}
 
-		// Sanitize inputs.
-		$post_type = isset( $_POST['post_type'] ) ? sanitize_key( wp_unslash( $_POST['post_type'] ) ) : 'post';
-		$limit     = isset( $_POST['limit'] ) ? absint( $_POST['limit'] ) : 200;
-		$offset    = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
-		$force     = ! empty( $_POST['force'] );
-
-		// Validate post type exists and is public.
-		if ( ! post_type_exists( $post_type ) ) {
-			$post_type = 'post';
+		$targets = array();
+		if ( isset( $_POST['targets'] ) && is_array( $_POST['targets'] ) ) {
+			$targets = array_map( 'sanitize_key', wp_unslash( $_POST['targets'] ) );
 		}
 
-		// Clamp limit to a safe range.
+		if ( empty( $targets ) ) {
+			$targets = array( 'post', 'page' );
+		}
+
+		$allowed_targets = array( 'post', 'page', 'category', 'post_tag' );
+		$targets         = array_values( array_intersect( $allowed_targets, $targets ) );
+
+		$limit  = isset( $_POST['limit'] ) ? absint( $_POST['limit'] ) : 200;
+		$offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
+		$force  = ! empty( $_POST['force'] );
+
 		$limit = max( 1, min( 2000, $limit ) );
 
-		// Query posts.
+		$changed = 0;
+		$skipped = 0;
+
+		foreach ( $targets as $target ) {
+			if ( in_array( $target, array( 'category', 'post_tag' ), true ) ) {
+				$result  = $this->bulk_update_terms( $target, $limit, $offset, $force );
+				$changed += $result['changed'];
+				$skipped += $result['skipped'];
+				continue;
+			}
+
+			if ( post_type_exists( $target ) ) {
+				$result  = $this->bulk_update_posts( $target, $limit, $offset, $force );
+				$changed += $result['changed'];
+				$skipped += $result['skipped'];
+			}
+		}
+
+		delete_option( self::ACTIVATION_POPUP_OPTION );
+		flush_rewrite_rules( false );
+
+		$redirect_url = add_query_arg(
+			array(
+				'page'        => self::PAGE_SLUG,
+				'pst_done'    => $changed,
+				'pst_skipped' => $skipped,
+			),
+			admin_url( 'tools.php' )
+		);
+
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+
+	/**
+	 * Bulk update slugs for a post type.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $post_type Post type slug.
+	 * @param int    $limit     Number of items to process.
+	 * @param int    $offset    Query offset.
+	 * @param bool   $force     Whether to force overwrite latin slugs.
+	 * @return array{changed:int,skipped:int}
+	 */
+	private function bulk_update_posts( $post_type, $limit, $offset, $force ) {
 		$query = new WP_Query(
 			array(
 				'post_type'      => $post_type,
@@ -255,70 +369,136 @@ class PST_Admin {
 		$changed = 0;
 		$skipped = 0;
 
-		if ( ! empty( $query->posts ) ) {
-			foreach ( $query->posts as $post_id ) {
-				$post = get_post( $post_id );
+		if ( empty( $query->posts ) ) {
+			return array(
+				'changed' => 0,
+				'skipped' => 0,
+			);
+		}
 
-				if ( ! $post ) {
-					++$skipped;
-					continue;
-				}
+		foreach ( $query->posts as $post_id ) {
+			$post = get_post( $post_id );
 
-				$current_slug = (string) $post->post_name;
-				$new_slug     = PST_Transliterator::transliterate( $post->post_title );
+			if ( ! $post ) {
+				++$skipped;
+				continue;
+			}
 
-				// Skip if transliteration yields empty slug.
-				if ( '' === $new_slug ) {
-					++$skipped;
-					continue;
-				}
+			$current_slug = (string) $post->post_name;
+			$new_slug     = PST_Transliterator::transliterate( $post->post_title );
 
-				// Skip already-Latin slugs unless force is enabled.
-				if ( ! $force && '' !== $current_slug && PST_Transliterator::is_latin_slug( $current_slug ) ) {
-					++$skipped;
-					continue;
-				}
+			if ( '' === $new_slug ) {
+				++$skipped;
+				continue;
+			}
 
-				// Ensure slug uniqueness.
-				$unique_slug = wp_unique_post_slug(
-					$new_slug,
-					$post_id,
-					$post->post_status,
-					$post->post_type,
-					$post->post_parent
-				);
+			if ( ! $force && '' !== $current_slug && PST_Transliterator::is_latin_slug( $current_slug ) ) {
+				++$skipped;
+				continue;
+			}
 
-				// Update the post slug.
-				$result = wp_update_post(
-					array(
-						'ID'        => $post_id,
-						'post_name' => $unique_slug,
-					),
-					true
-				);
+			$unique_slug = wp_unique_post_slug(
+				$new_slug,
+				$post_id,
+				$post->post_status,
+				$post->post_type,
+				$post->post_parent
+			);
 
-				if ( is_wp_error( $result ) ) {
-					++$skipped;
-				} else {
-					++$changed;
-				}
+			$result = wp_update_post(
+				array(
+					'ID'        => $post_id,
+					'post_name' => $unique_slug,
+				),
+				true
+			);
+
+			if ( is_wp_error( $result ) ) {
+				++$skipped;
+			} else {
+				++$changed;
 			}
 		}
 
-		// Flush rewrite rules to prevent 404s.
-		flush_rewrite_rules( false );
+		return array(
+			'changed' => $changed,
+			'skipped' => $skipped,
+		);
+	}
 
-		// Redirect back with result counts.
-		$redirect_url = add_query_arg(
+	/**
+	 * Bulk update slugs for a taxonomy.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $taxonomy Taxonomy name.
+	 * @param int    $limit    Number of items to process.
+	 * @param int    $offset   Query offset.
+	 * @param bool   $force    Whether to force overwrite latin slugs.
+	 * @return array{changed:int,skipped:int}
+	 */
+	private function bulk_update_terms( $taxonomy, $limit, $offset, $force ) {
+		$terms = get_terms(
 			array(
-				'page'        => self::PAGE_SLUG,
-				'pst_done'    => $changed,
-				'pst_skipped' => $skipped,
-			),
-			admin_url( 'tools.php' )
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => false,
+				'number'     => $limit,
+				'offset'     => $offset,
+			)
 		);
 
-		wp_safe_redirect( $redirect_url );
-		exit;
+		$changed = 0;
+		$skipped = 0;
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array(
+				'changed' => 0,
+				'skipped' => is_wp_error( $terms ) ? $limit : 0,
+			);
+		}
+
+		foreach ( $terms as $term ) {
+			$current_slug = (string) $term->slug;
+			$new_slug     = PST_Transliterator::transliterate( $term->name );
+
+			if ( '' === $new_slug ) {
+				++$skipped;
+				continue;
+			}
+
+			if ( ! $force && '' !== $current_slug && PST_Transliterator::is_latin_slug( $current_slug ) ) {
+				++$skipped;
+				continue;
+			}
+
+			if ( ! $force && '' !== $current_slug && PST_Transliterator::has_persian_or_arabic( $current_slug ) ) {
+				++$skipped;
+				continue;
+			}
+
+			if ( ! $force && $current_slug === $new_slug ) {
+				++$skipped;
+				continue;
+			}
+
+			$result = wp_update_term(
+				$term->term_id,
+				$taxonomy,
+				array(
+					'slug' => $new_slug,
+				)
+			);
+
+			if ( is_wp_error( $result ) ) {
+				++$skipped;
+			} else {
+				++$changed;
+			}
+		}
+
+		return array(
+			'changed' => $changed,
+			'skipped' => $skipped,
+		);
 	}
 }
