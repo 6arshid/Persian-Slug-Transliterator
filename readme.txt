@@ -1,8 +1,8 @@
 === Persian Slug Transliterator ===
 Contributors:      6arshid, hassantafreshi, whitestudio
-Tags:              persian, slug, transliteration, farsi, arabic, seo, permalink
+Tags:              persian, slug, transliteration, farsi, seo
 Requires at least: 5.0
-Tested up to:      6.7
+Tested up to:      6.9
 Requires PHP:      7.2
 Stable tag:        1.0.0
 License:           GPLv2 or later
