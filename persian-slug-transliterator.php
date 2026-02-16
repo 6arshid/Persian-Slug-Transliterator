@@ -152,6 +152,24 @@ function pst_resolve_taxonomy_request_slug( $incoming_slug, $taxonomy ) {
 		if ( $name_match instanceof WP_Term ) {
 			return $name_match->slug;
 		}
+
+		$name_candidates = array_unique(
+			array_filter(
+				array(
+					$incoming_slug,
+					str_replace( '-', ' ', $incoming_slug ),
+					str_replace( '-', '‌', $incoming_slug ),
+				)
+			)
+		);
+
+		foreach ( $name_candidates as $name_candidate ) {
+			$name_candidate_match = get_term_by( 'name', $name_candidate, $taxonomy );
+
+			if ( $name_candidate_match instanceof WP_Term ) {
+				return $name_candidate_match->slug;
+			}
+		}
 	}
 
 	return '';
