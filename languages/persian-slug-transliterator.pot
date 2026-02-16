@@ -1,0 +1,99 @@
+# Copyright (C) 2026 6arshid
+# This file is distributed under the same license as the Persian Slug Transliterator plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Persian Slug Transliterator 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/6arshid/Persian-Slug-Transliterator/issues\n"
+"POT-Creation-Date: 2026-02-16T00:00:00+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Plugin Name of the plugin
+msgid "Persian Slug Transliterator"
+msgstr ""
+
+#. Description of the plugin
+msgid "Automatically transliterates Persian/Arabic post slugs to clean Latin characters. Includes a bulk update tool for existing content."
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Persian Slugs"
+msgstr ""
+
+#: includes/class-pst-admin.php
+#, php-format
+msgid "Bulk update completed. Updated: %1$s — Skipped: %2$s"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "This tool converts existing Persian/Arabic slugs of posts and pages to clean Latin characters based on the post title."
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Content Type"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Posts"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Pages"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Batch Size"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Number of posts to process per batch. Use a smaller number for large sites to avoid timeouts."
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Offset"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Skip this many posts from the beginning. Use for batch processing (e.g., 0, 200, 400, ...)."
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Force Overwrite"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Overwrite slugs that are already in Latin characters."
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Not recommended unless you want all slugs regenerated uniformly."
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Start Bulk Update"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Important:"
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "After updating slugs, consider setting up 301 redirects from old URLs to new ones to preserve SEO and avoid broken links."
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+#: includes/class-pst-admin.php
+msgid "Security check failed. Please try again."
+msgstr ""
+
+#: persian-slug-transliterator.php
+msgid "Bulk Update"
+msgstr ""
