@@ -94,6 +94,7 @@ add_action( 'plugins_loaded', 'pst_admin_init' );
  * @return void
  */
 function pst_activate() {
+	add_option( 'pst_show_activation_popup', 1 );
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'pst_activate' );

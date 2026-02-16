@@ -204,4 +204,16 @@ class PST_Transliterator {
 	public static function is_latin_slug( $slug ) {
 		return (bool) preg_match( '/^[a-z0-9-]+$/', $slug );
 	}
+
+	/**
+	 * Check whether a value contains Persian/Arabic characters.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $value The value to inspect.
+	 * @return bool True when Persian/Arabic characters exist.
+	 */
+	public static function has_persian_or_arabic( $value ) {
+		return (bool) preg_match( '/[\x{0600}-\x{06FF}]/u', (string) $value );
+	}
 }
