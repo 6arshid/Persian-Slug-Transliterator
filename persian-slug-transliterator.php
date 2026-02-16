@@ -74,6 +74,45 @@ function pst_register_sanitize_filter() {
 add_action( 'init', 'pst_register_sanitize_filter' );
 
 /**
+ * Normalize incoming taxonomy slugs containing Persian/Arabic characters.
+ *
+ * Allows legacy Persian tag/category URLs to keep working after transliteration.
+ *
+ * @since 1.0.1
+ *
+ * @param array $query_vars Main request query vars.
+ * @return array Filtered query vars.
+ */
+function pst_normalize_taxonomy_request_slugs( $query_vars ) {
+	if ( ! is_array( $query_vars ) || empty( $query_vars ) ) {
+		return $query_vars;
+	}
+
+	$slug_keys = array( 'tag', 'category_name', 'term' );
+
+	foreach ( $slug_keys as $key ) {
+		if ( empty( $query_vars[ $key ] ) || ! is_string( $query_vars[ $key ] ) ) {
+			continue;
+		}
+
+		$incoming_slug = rawurldecode( $query_vars[ $key ] );
+
+		if ( ! PST_Transliterator::has_persian_or_arabic( $incoming_slug ) ) {
+			continue;
+		}
+
+		$transliterated = PST_Transliterator::transliterate( $incoming_slug );
+
+		if ( '' !== $transliterated ) {
+			$query_vars[ $key ] = $transliterated;
+		}
+	}
+
+	return $query_vars;
+}
+add_filter( 'request', 'pst_normalize_taxonomy_request_slugs', 9 );
+
+/**
  * Initialize admin functionality.
  *
  * @since 1.0.0
