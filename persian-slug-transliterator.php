@@ -10,7 +10,7 @@
  * Author URI:        https://github.com/6arshid
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       persian-slug-transliterator
+ * Text Domain:       Persian-Slug-Transliterator-main
  * Domain Path:       /languages
  *
  * @package PersianSlugTransliterator
@@ -47,20 +47,6 @@ define( 'PST_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 require_once PST_PLUGIN_DIR . 'includes/class-pst-transliterator.php';
 require_once PST_PLUGIN_DIR . 'includes/class-pst-admin.php';
 
-/**
- * Load plugin text domain for translations.
- *
- * @since 1.0.0
- * @return void
- */
-function pst_load_textdomain() {
-	load_plugin_textdomain(
-		'persian-slug-transliterator',
-		false,
-		dirname( PST_PLUGIN_BASENAME ) . '/languages'
-	);
-}
-add_action( 'init', 'pst_load_textdomain' );
 
 /**
  * Register the sanitize_title filter for automatic transliteration.
@@ -223,7 +209,7 @@ function pst_plugin_action_links( $links ) {
 	$settings_link = sprintf(
 		'<a href="%s">%s</a>',
 		esc_url( admin_url( 'tools.php?page=persian-slug-transliterator' ) ),
-		esc_html__( 'Bulk Update', 'persian-slug-transliterator' )
+		esc_html__( 'Bulk Update', 'Persian-Slug-Transliterator-main' )
 	);
 	array_unshift( $links, $settings_link );
 	return $links;
