@@ -10,7 +10,7 @@
  * Author URI:        https://github.com/6arshid
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       Persian-Slug-Transliterator-main
+ * Text Domain:       persian-slug-transliterator
  * Domain Path:       /languages
  *
  * @package PersianSlugTransliterator
@@ -209,7 +209,7 @@ function pst_plugin_action_links( $links ) {
 	$settings_link = sprintf(
 		'<a href="%s">%s</a>',
 		esc_url( admin_url( 'tools.php?page=persian-slug-transliterator' ) ),
-		esc_html__( 'Bulk Update', 'Persian-Slug-Transliterator-main' )
+		esc_html__( 'Bulk Update', 'persian-slug-transliterator' )
 	);
 	array_unshift( $links, $settings_link );
 	return $links;
