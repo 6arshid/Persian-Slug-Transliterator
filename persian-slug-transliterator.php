@@ -88,29 +88,74 @@ function pst_normalize_taxonomy_request_slugs( $query_vars ) {
 		return $query_vars;
 	}
 
-	$slug_keys = array( 'tag', 'category_name', 'term' );
+	$taxonomy_map = array(
+		'tag'           => 'post_tag',
+		'category_name' => 'category',
+		'term'          => isset( $query_vars['taxonomy'] ) ? $query_vars['taxonomy'] : '',
+	);
 
-	foreach ( $slug_keys as $key ) {
+	foreach ( $taxonomy_map as $key => $taxonomy ) {
 		if ( empty( $query_vars[ $key ] ) || ! is_string( $query_vars[ $key ] ) ) {
 			continue;
 		}
 
-		$incoming_slug = rawurldecode( $query_vars[ $key ] );
-
-		if ( ! PST_Transliterator::has_persian_or_arabic( $incoming_slug ) ) {
+		if ( empty( $taxonomy ) || ! taxonomy_exists( $taxonomy ) ) {
 			continue;
 		}
 
-		$transliterated = PST_Transliterator::transliterate( $incoming_slug );
+		$incoming_slug = rawurldecode( $query_vars[ $key ] );
+		$resolved_slug = pst_resolve_taxonomy_request_slug( $incoming_slug, $taxonomy );
 
-		if ( '' !== $transliterated ) {
-			$query_vars[ $key ] = $transliterated;
+		if ( '' !== $resolved_slug ) {
+			$query_vars[ $key ] = $resolved_slug;
 		}
 	}
 
 	return $query_vars;
 }
 add_filter( 'request', 'pst_normalize_taxonomy_request_slugs', 9 );
+
+/**
+ * Resolve an incoming taxonomy request slug to an existing term slug.
+ *
+ * Supports direct slug matches, transliterated matches, and name-based lookup.
+ *
+ * @since 1.0.1
+ *
+ * @param string $incoming_slug Incoming slug from the request.
+ * @param string $taxonomy      Taxonomy name.
+ * @return string Resolved term slug, or empty string if no match is found.
+ */
+function pst_resolve_taxonomy_request_slug( $incoming_slug, $taxonomy ) {
+	$incoming_slug = trim( (string) $incoming_slug );
+
+	if ( '' === $incoming_slug || '' === $taxonomy ) {
+		return '';
+	}
+
+	$direct_match = get_term_by( 'slug', $incoming_slug, $taxonomy );
+	if ( $direct_match instanceof WP_Term ) {
+		return $direct_match->slug;
+	}
+
+	if ( PST_Transliterator::has_persian_or_arabic( $incoming_slug ) ) {
+		$transliterated = PST_Transliterator::transliterate( $incoming_slug );
+
+		if ( '' !== $transliterated ) {
+			$transliterated_match = get_term_by( 'slug', $transliterated, $taxonomy );
+			if ( $transliterated_match instanceof WP_Term ) {
+				return $transliterated_match->slug;
+			}
+		}
+
+		$name_match = get_term_by( 'name', $incoming_slug, $taxonomy );
+		if ( $name_match instanceof WP_Term ) {
+			return $name_match->slug;
+		}
+	}
+
+	return '';
+}
 
 /**
  * Initialize admin functionality.
