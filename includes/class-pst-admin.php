@@ -99,6 +99,7 @@ class PST_Admin {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$skipped = isset( $_GET['pst_skipped'] ) ? absint( $_GET['pst_skipped'] ) : 0;
 
+		$post_types = $this->get_supported_post_types();
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'Persian Slug Transliterator', 'Persian-Slug-Transliterator-main' ); ?></h1>
@@ -119,7 +120,7 @@ class PST_Admin {
 			<?php endif; ?>
 
 			<p>
-				<?php esc_html_e( 'This tool converts existing Persian/Arabic slugs for posts, pages, categories, and tags to clean Latin characters based on their names.', 'Persian-Slug-Transliterator-main' ); ?>
+				<?php esc_html_e( 'This tool converts existing Persian/Arabic slugs for supported post types, categories, and tags to clean Latin characters based on their names.', 'Persian-Slug-Transliterator-main' ); ?>
 			</p>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -132,8 +133,12 @@ class PST_Admin {
 							<?php esc_html_e( 'Items to translate', 'Persian-Slug-Transliterator-main' ); ?>
 						</th>
 						<td>
-							<label><input type="checkbox" name="targets[]" value="post" checked="checked" /> <?php esc_html_e( 'Posts', 'Persian-Slug-Transliterator-main' ); ?></label><br />
-							<label><input type="checkbox" name="targets[]" value="page" checked="checked" /> <?php esc_html_e( 'Pages', 'Persian-Slug-Transliterator-main' ); ?></label><br />
+							<?php foreach ( $post_types as $post_type ) : ?>
+								<label>
+									<input type="checkbox" name="targets[]" value="<?php echo esc_attr( $post_type->name ); ?>" checked="checked" />
+									<?php echo esc_html( $post_type->labels->name ); ?>
+								</label><br />
+							<?php endforeach; ?>
 							<label><input type="checkbox" name="targets[]" value="category" checked="checked" /> <?php esc_html_e( 'Categories', 'Persian-Slug-Transliterator-main' ); ?></label><br />
 							<label><input type="checkbox" name="targets[]" value="post_tag" checked="checked" /> <?php esc_html_e( 'Tags', 'Persian-Slug-Transliterator-main' ); ?></label>
 						</td>
@@ -237,6 +242,7 @@ class PST_Admin {
 			return;
 		}
 
+		$post_types  = $this->get_supported_post_types();
 		$dismiss_url = wp_nonce_url(
 			add_query_arg( 'pst_popup_action', 'dismiss', admin_url() ),
 			'pst_popup_dismiss'
@@ -245,15 +251,19 @@ class PST_Admin {
 		<div id="pst-activation-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;">
 			<div style="background:#fff;max-width:560px;width:92%;padding:24px;border-radius:6px;box-shadow:0 15px 35px rgba(0,0,0,.2);">
 				<h2 style="margin-top:0;"><?php esc_html_e( 'Translate existing slugs now?', 'Persian-Slug-Transliterator-main' ); ?></h2>
-				<p><?php esc_html_e( 'Select which content you want to transliterate. Persian tags/categories are detected from their names and updated to clean slugs.', 'Persian-Slug-Transliterator-main' ); ?></p>
+				<p><?php esc_html_e( 'Select which content you want to transliterate. Supported post types and Persian tags/categories are detected from their names and updated to clean slugs.', 'Persian-Slug-Transliterator-main' ); ?></p>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="pst_bulk_update" />
 					<input type="hidden" name="limit" value="2000" />
 					<input type="hidden" name="offset" value="0" />
 					<?php wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD ); ?>
 					<p>
-						<label><input type="checkbox" name="targets[]" value="post" checked="checked" /> <?php esc_html_e( 'Posts', 'Persian-Slug-Transliterator-main' ); ?></label><br />
-						<label><input type="checkbox" name="targets[]" value="page" checked="checked" /> <?php esc_html_e( 'Pages', 'Persian-Slug-Transliterator-main' ); ?></label><br />
+						<?php foreach ( $post_types as $post_type ) : ?>
+							<label>
+								<input type="checkbox" name="targets[]" value="<?php echo esc_attr( $post_type->name ); ?>" checked="checked" />
+								<?php echo esc_html( $post_type->labels->name ); ?>
+							</label><br />
+						<?php endforeach; ?>
 						<label><input type="checkbox" name="targets[]" value="category" checked="checked" /> <?php esc_html_e( 'Categories', 'Persian-Slug-Transliterator-main' ); ?></label><br />
 						<label><input type="checkbox" name="targets[]" value="post_tag" checked="checked" /> <?php esc_html_e( 'Tags', 'Persian-Slug-Transliterator-main' ); ?></label>
 					</p>
@@ -298,7 +308,7 @@ class PST_Admin {
 			$targets = array( 'post', 'page' );
 		}
 
-		$allowed_targets = array( 'post', 'page', 'category', 'post_tag' );
+		$allowed_targets = array_merge( $this->get_supported_post_type_names(), array( 'category', 'post_tag' ) );
 		$targets         = array_values( array_intersect( $allowed_targets, $targets ) );
 
 		$limit  = isset( $_POST['limit'] ) ? absint( $_POST['limit'] ) : 200;
@@ -339,6 +349,54 @@ class PST_Admin {
 
 		wp_safe_redirect( $redirect_url );
 		exit;
+	}
+
+	/**
+	 * Get supported post type objects for bulk transliteration.
+	 *
+	 * @since 1.0.1
+	 * @return WP_Post_Type[]
+	 */
+	private function get_supported_post_types() {
+		$post_types = get_post_types(
+			array(
+				'show_ui' => true,
+			),
+			'objects'
+		);
+
+		if ( empty( $post_types ) || ! is_array( $post_types ) ) {
+			return array();
+		}
+
+		return array_values(
+			array_filter(
+				$post_types,
+				static function ( $post_type ) {
+					if ( ! $post_type instanceof WP_Post_Type ) {
+						return false;
+					}
+
+					return ! in_array( $post_type->name, array( 'attachment', 'revision', 'nav_menu_item' ), true );
+				}
+			)
+		);
+	}
+
+	/**
+	 * Get supported post type names.
+	 *
+	 * @since 1.0.1
+	 * @return string[]
+	 */
+	private function get_supported_post_type_names() {
+		$post_type_names = array();
+
+		foreach ( $this->get_supported_post_types() as $post_type ) {
+			$post_type_names[] = $post_type->name;
+		}
+
+		return $post_type_names;
 	}
 
 	/**
